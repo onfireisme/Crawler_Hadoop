@@ -1,8 +1,6 @@
 package Crawler_Download;
 
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
+
 import java.io.IOException;
 
 import org.apache.http.HttpEntity;
@@ -33,61 +31,69 @@ public class DownloadPage {
 		contentType.substring(contentType.lastIndexOf("/")+1);
 		}	
 	}
-	/*
-	 */
-	private void saveToLocal(byte[] data,String filePath)
-	{
-		try {
-			DataOutputStream out=new DataOutputStream(
-					new FileOutputStream(new File(filePath)));
-			for(int i=0;i<data.length;i++){
-				out.write(data[i]);
-			}
-			out.flush();
-			out.close();
-		} catch (IOException e) {
-			e.printStackTrace();
+	public static void saveToHdfs(String url,String hdfsPath){
+		byte[] responseBody=downloadPage(url,hdfsPath);
+		String fileHdfsPath=null;
+		if(responseBody!=null){
+			fileHdfsPath=hdfsPath+getFileNameByUrl(url,"html");
+			Configuration conf = new Configuration();
+		    conf.addResource(new Path("/opt/hadoop-2.3.0/etc/hadoop/core-site.xml"));
+		    conf.addResource(new Path("/opt/hadoop-2.3.0/etc/hadoop/hdfs-site.xml"));
+		    // String hdfsPath="hdfs://ubuntu:9000/Crawler/HtmlFiles/";
+		    FileSystem fileSystem;
+		    try {
+				fileSystem = FileSystem.get(conf);
+					 FSDataOutputStream out;
+					 if (fileSystem.exists(new Path(fileHdfsPath))) {
+					          System.out.println("File " + hdfsPath + " already exists");
+					          return;
+					 }
+					 out= fileSystem.create(new Path(fileHdfsPath));
+					 out.write(responseBody);
+					 out.close();
+					 fileSystem.close();  
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 		}
 	}
 	//this time ,we just return the page data
-	public static void downloadPage(String url,String hdfsPath)throws Exception{
-		String fileHdfsPath=null;
+	public static byte [] downloadPage(String url,String hdfsPath){
 		CloseableHttpClient httpclient = HttpClients.createDefault();
+		byte[] responseBody;
 		HttpGet httpget = new HttpGet(url);
-		CloseableHttpResponse response = httpclient.execute(httpget);
-        HttpEntity entity = response.getEntity();
-        //configuration of hadoop file system
-        Configuration conf = new Configuration();
-        conf.addResource(new Path("/opt/hadoop-2.3.0/etc/hadoop/core-site.xml"));
-        conf.addResource(new Path("/opt/hadoop-2.3.0/etc/hadoop/hdfs-site.xml"));
-       // String hdfsPath="hdfs://ubuntu:9000/Crawler/HtmlFiles/";
-        FileSystem fileSystem = FileSystem.get(conf);
-        FSDataOutputStream out;
-            int status = response.getStatusLine().getStatusCode();
-            if (status >= 200 && status < 300) {
+		try {
+			CloseableHttpResponse response = httpclient.execute(httpget);
+	        HttpEntity entity = response.getEntity();
+	        int status = response.getStatusLine().getStatusCode();
+	        if (status >= 200 && status < 300) {
+	        	System.out.print(status);
             	// ok it seems that 
-            	
-    			fileHdfsPath=hdfsPath+getFileNameByUrl(url,entity.getContentType().toString());
-    		      if (fileSystem.exists(new Path(fileHdfsPath))) {
-    		          System.out.println("File " + hdfsPath + " already exists");
-    		          return;
-    		      }
-    	        out= fileSystem.create(new Path(fileHdfsPath));
+
     			//conver the entity to byte data,we can regard the entity as page at this place
-    			byte[] responseBody = EntityUtils.toByteArray(entity);
-    			out.write(responseBody);
-    			out.close();
-    			fileSystem.close();
-            } else {
-            	//some websites has forbidden the crawler,and if I have time ,I will fix this problem
-            	fileHdfsPath = null;
-            	if(status==403){
-            		System.out.println("this "+url+"forbide crawler");
-            	}
-            	fileSystem.close();
-                //throw new ClientProtocolException("Unexpected response status: " + status);
+	        	responseBody = EntityUtils.toByteArray(entity);
+    	        response.close();
+
+    			return responseBody;
             }
-            response.close();
+	        else{
+	        	responseBody=null;
+	        	response.close();
+	        	return null;
+	        }
+		} catch (ClientProtocolException e) {
+			// TODO Auto-generated catch block
+			//e.printStackTrace();
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			//e.printStackTrace();
+		}
+        //configuration of hadoop file system
+		responseBody=null;
+		return responseBody;
+            
 	}
 
 }
