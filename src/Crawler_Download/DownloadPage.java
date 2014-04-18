@@ -3,13 +3,12 @@ package Crawler_Download;
 
 import java.io.IOException;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpException;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -44,6 +43,7 @@ public class DownloadPage {
 		    try {
 				fileSystem = FileSystem.get(conf);
 					 FSDataOutputStream out;
+					 System.out.println("yes");
 					 if (fileSystem.exists(new Path(fileHdfsPath))) {
 					          System.out.println("File " + hdfsPath + " already exists");
 					          return;
@@ -57,38 +57,54 @@ public class DownloadPage {
 					e.printStackTrace();
 				}
 		}
+		else{
+			System.out.println("the file is null");
+		}
+	}
+	public static int getStatus(String url){
+		HttpClient httpClient = new HttpClient();
+		httpClient.getHttpConnectionManager().getParams().setConnectionTimeout(5000);
+		GetMethod getMethod=new GetMethod(url);	 
+		getMethod.getParams().setParameter(HttpMethodParams.SO_TIMEOUT,5000);
+		  //设置请求重试处理，用的是默认的重试处理：请求三次
+		getMethod.getParams().setParameter(HttpMethodParams.RETRY_HANDLER,
+		          new DefaultHttpMethodRetryHandler());
+		HttpGet httpget = new HttpGet(url);
+		int status=0;
+		try {
+			status = httpClient.executeMethod(getMethod);
+		} catch (HttpException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return status;
+        
 	}
 	//this time ,we just return the page data
 	public static byte [] downloadPage(String url,String hdfsPath){
-		CloseableHttpClient httpclient = HttpClients.createDefault();
+		HttpClient httpClient = new HttpClient();
+		httpClient.getHttpConnectionManager().getParams().setConnectionTimeout(5000);
+		GetMethod getMethod=new GetMethod(url);	 
+		getMethod.getParams().setParameter(HttpMethodParams.SO_TIMEOUT,5000);
+		  //设置请求重试处理，用的是默认的重试处理：请求三次
+		getMethod.getParams().setParameter(HttpMethodParams.RETRY_HANDLER,
+		          new DefaultHttpMethodRetryHandler());
 		byte[] responseBody;
-		HttpGet httpget = new HttpGet(url);
 		try {
-			CloseableHttpResponse response = httpclient.execute(httpget);
-	        HttpEntity entity = response.getEntity();
-	        int status = response.getStatusLine().getStatusCode();
-	        if (status >= 200 && status < 300) {
-	        	System.out.print(status);
-            	// ok it seems that 
-
-    			//conver the entity to byte data,we can regard the entity as page at this place
-	        	responseBody = EntityUtils.toByteArray(entity);
-    	        response.close();
-
-    			return responseBody;
-            }
-	        else{
-	        	responseBody=null;
-	        	response.close();
-	        	return null;
-	        }
-		} catch (ClientProtocolException e) {
+			int status = httpClient.executeMethod(getMethod);
+			if (status >= 200 && status < 300) {
+				responseBody = getMethod.getResponseBody();
+				return responseBody;
+			}
+		} catch (HttpException e) {
 			// TODO Auto-generated catch block
-			//e.printStackTrace();
-
+			e.printStackTrace();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			//e.printStackTrace();
+			e.printStackTrace();
 		}
         //configuration of hadoop file system
 		responseBody=null;

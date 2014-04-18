@@ -14,7 +14,7 @@ public class CrawlerThread implements Runnable {
 	}
 	//this is the entry point for the new thread
 	public void run(){
-		DownloadPage.downloadPage(Url,outPutPath);
+		DownloadPage.saveToHdfs(Url,outPutPath);
 	}
 	
 }

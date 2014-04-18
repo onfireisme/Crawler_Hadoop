@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="jre/charsets.jar"/>
+	<classpathentry kind="lib" path="jre/dnsns.jar"/>
+	<classpathentry kind="lib" path="jre/jce.jar"/>
+	<classpathentry kind="lib" path="jre/jfr.jar"/>
+	<classpathentry kind="lib" path="jre/jsse.jar"/>
+	<classpathentry kind="lib" path="jre/localedata.jar"/>
+	<classpathentry kind="lib" path="jre/resources.jar"/>
+	<classpathentry kind="lib" path="jre/rt.jar"/>
+	<classpathentry kind="lib" path="jre/sunec.jar"/>
+	<classpathentry kind="lib" path="jre/sunjce_provider.jar"/>
+	<classpathentry kind="lib" path="jre/sunpkcs11.jar"/>
+	<classpathentry kind="lib" path="jre/zipfs.jar"/>
 	<classpathentry kind="lib" path="lib/activation-1.1.jar"/>
 	<classpathentry kind="lib" path="lib/aopalliance-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/asm-3.2.jar"/>
@@ -49,7 +61,6 @@
 	<classpathentry kind="lib" path="lib/hadoop-yarn-server-resourcemanager-2.3.0.jar"/>
 	<classpathentry kind="lib" path="lib/hadoop-yarn-server-web-proxy-2.3.0.jar"/>
 	<classpathentry kind="lib" path="lib/hamcrest-core-1.1.jar"/>
-	<classpathentry kind="lib" path="lib/httpclient-4.3.3.jar"/>
 	<classpathentry kind="lib" path="lib/httpclient-cache-4.3.3.jar"/>
 	<classpathentry kind="lib" path="lib/httpcore-4.3.2.jar"/>
 	<classpathentry kind="lib" path="lib/httpmime-4.3.3.jar"/>
@@ -91,17 +102,6 @@
 	<classpathentry kind="lib" path="lib/xmlenc-0.52.jar"/>
 	<classpathentry kind="lib" path="lib/xz-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/zookeeper-3.4.5.jar"/>
-	<classpathentry kind="lib" path="jre/charsets.jar"/>
-	<classpathentry kind="lib" path="jre/dnsns.jar"/>
-	<classpathentry kind="lib" path="jre/jce.jar"/>
-	<classpathentry kind="lib" path="jre/jfr.jar"/>
-	<classpathentry kind="lib" path="jre/jsse.jar"/>
-	<classpathentry kind="lib" path="jre/localedata.jar"/>
-	<classpathentry kind="lib" path="jre/resources.jar"/>
-	<classpathentry kind="lib" path="jre/rt.jar"/>
-	<classpathentry kind="lib" path="jre/sunec.jar"/>
-	<classpathentry kind="lib" path="jre/sunjce_provider.jar"/>
-	<classpathentry kind="lib" path="jre/sunpkcs11.jar"/>
-	<classpathentry kind="lib" path="jre/zipfs.jar"/>
+	<classpathentry kind="lib" path="/opt/hadoop-2.3.0/share/hadoop/common/lib/httpclient-4.2.5.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

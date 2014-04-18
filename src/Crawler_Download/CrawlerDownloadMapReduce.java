@@ -4,12 +4,14 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.FileOutputFormat;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.JobContext;
 import org.apache.hadoop.mapred.MapReduceBase;
 import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.OutputCollector;
@@ -17,6 +19,7 @@ import org.apache.hadoop.mapred.Reducer;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.TextInputFormat;
 import org.apache.hadoop.mapred.TextOutputFormat;
+import org.apache.hadoop.mapreduce.Job;
 
 
 public class CrawlerDownloadMapReduce {
@@ -54,7 +57,10 @@ public class CrawlerDownloadMapReduce {
       Reducer<Text, IntWritable, Text, IntWritable> {
 		  public void reduce(Text url, Iterator<IntWritable> values,
           OutputCollector<Text, IntWritable> output, Reporter reporter){
-			  new CrawlerThread(url.toString(),outPutPath);
+			  //int status=DownloadPage.getStatus(url.toString());
+			  //if (status >= 200 && status < 300) {
+				  new CrawlerThread(url.toString(),outPutPath);
+			  //}
 		  }
 	}
 	public static void main(String[] args)throws Exception{ 
@@ -70,13 +76,17 @@ public class CrawlerDownloadMapReduce {
 		out.close();
 		fileSystem.close();
 		*/
-		//String filenamePath="hdfs://ubuntu:9000/Crawler/inputUrl/url.txt";
-		//String outPut="hdfs://ubuntu:9000/Crawler/HtmlFiles/mytest";
-		String filenamePath=args[0];
-		String outPut=args[1];
-		outPutPath=args[2];
-		//outPutPath="hdfs://ubuntu:9000/Crawler/HtmlFiles/";
+		
+		String filenamePath="hdfs://ubuntu:9000/Crawler/url.txt";
+		String outPut="hdfs://ubuntu:9000/Crawler/HtmlFiles/mytest3";
+		//String filenamePath=args[0];
+		//String outPut=args[1];
+		//outPutPath=args[2];
+		outPutPath="hdfs://ubuntu:9000/Crawler/HtmlFiles/";
 		JobConf conf = new JobConf(CrawlerDownloadMapReduce.class);
+		conf.setBoolean("mapreduce.job.user.classpath.first", true);
+
+		//conf.setUserClassesTakesPrecedence(true);
 		
 		conf.setOutputKeyClass(Text.class);
 	    conf.setOutputValueClass(IntWritable.class);
