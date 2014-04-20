@@ -34,6 +34,7 @@ public class DownloadPage {
 		byte[] responseBody=downloadPage(url,hdfsPath);
 		String fileHdfsPath=null;
 		if(responseBody!=null){
+			//may be we just use the url as the key value
 			fileHdfsPath=hdfsPath+getFileNameByUrl(url,"html");
 			Configuration conf = new Configuration();
 		    conf.addResource(new Path("/opt/hadoop-2.3.0/etc/hadoop/core-site.xml"));

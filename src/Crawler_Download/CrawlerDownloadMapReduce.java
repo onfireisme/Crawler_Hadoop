@@ -29,6 +29,7 @@ public class CrawlerDownloadMapReduce {
 	* and the ouput is ok for us
 	*/
 	private static String outPutPath;
+	private static String level="0";
 	//private static String hdfsPath="hdfs://ubuntu:9000/Crawler/HtmlFiles/";
 	public static class Map extends MapReduceBase implements
     Mapper<LongWritable, Text, Text, IntWritable> {
@@ -78,13 +79,13 @@ public class CrawlerDownloadMapReduce {
 		*/
 		
 		String filenamePath="hdfs://ubuntu:9000/Crawler/url.txt";
-		String outPut="hdfs://ubuntu:9000/Crawler/HtmlFiles/mytest3";
+		String outPut="hdfs://ubuntu:9000/Crawler/temp/output1";
 		//String filenamePath=args[0];
 		//String outPut=args[1];
 		//outPutPath=args[2];
-		outPutPath="hdfs://ubuntu:9000/Crawler/HtmlFiles/";
+		outPutPath="hdfs://ubuntu:9000/Crawler/HtmlFiles/"+level;
 		JobConf conf = new JobConf(CrawlerDownloadMapReduce.class);
-		conf.setBoolean("mapreduce.job.user.classpath.first", true);
+		//conf.setBoolean("mapreduce.job.user.classpath.first", true);
 
 		//conf.setUserClassesTakesPrecedence(true);
 		
@@ -100,7 +101,8 @@ public class CrawlerDownloadMapReduce {
 		conf.setOutputFormat(TextOutputFormat.class);
 		
 		FileInputFormat.setInputPaths(conf, new Path(filenamePath));
-	    FileOutputFormat.setOutputPath(conf, new Path(outPut));
+//	    FileOutputFormat.setOutputPath(conf, new Path(outPut));
+		FileOutputFormat.setOutputPath(conf, null);
 	    JobClient.runJob(conf);
 	
 	}
