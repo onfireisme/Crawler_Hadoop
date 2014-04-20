@@ -103,5 +103,10 @@
 	<classpathentry kind="lib" path="lib/xz-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/zookeeper-3.4.5.jar"/>
 	<classpathentry kind="lib" path="/opt/hadoop-2.3.0/share/hadoop/common/lib/httpclient-4.2.5.jar"/>
+	<classpathentry kind="lib" path="lib/filterbuilder.jar"/>
+	<classpathentry kind="lib" path="lib/htmllexer.jar"/>
+	<classpathentry kind="lib" path="lib/htmlparser.jar"/>
+	<classpathentry kind="lib" path="lib/sitecapturer.jar"/>
+	<classpathentry kind="lib" path="lib/thumbelina.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
