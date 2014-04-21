@@ -30,44 +30,60 @@ public class DownloadPage {
 		contentType.substring(contentType.lastIndexOf("/")+1);
 		}	
 	}
-	public static void saveToHdfs(String url,String hdfsPath){
-		byte[] responseBody=downloadPage(url,hdfsPath);
+	public static String saveToHdfs(byte [] pageBody,String url,String hdfsPath,String HtmlInfoFilePath){
+		byte[] responseBody=pageBody;
+		//byte[] responseBody=downloadPage(url,hdfsPath);
 		String fileHdfsPath=null;
 		if(responseBody!=null){
+			System.out.println("we get"+url);
 			//may be we just use the url as the key value
 			fileHdfsPath=hdfsPath+getFileNameByUrl(url,"html");
 			Configuration conf = new Configuration();
 		    conf.addResource(new Path("/opt/hadoop-2.3.0/etc/hadoop/core-site.xml"));
 		    conf.addResource(new Path("/opt/hadoop-2.3.0/etc/hadoop/hdfs-site.xml"));
 		    // String hdfsPath="hdfs://ubuntu:9000/Crawler/HtmlFiles/";
-		    FileSystem fileSystem;
+		    FileSystem fileSystem=null;
 		    try {
 				fileSystem = FileSystem.get(conf);
-					 FSDataOutputStream out;
-					 System.out.println("yes");
-					 if (fileSystem.exists(new Path(fileHdfsPath))) {
-					          System.out.println("File " + hdfsPath + " already exists");
-					          return;
-					 }
-					 out= fileSystem.create(new Path(fileHdfsPath));
-					 out.write(responseBody);
-					 out.close();
-					 fileSystem.close();  
+				FSDataOutputStream out;
+				if (fileSystem.exists(new Path(fileHdfsPath))) {
+						System.out.println("File " + hdfsPath + " already exists");
+					    return null;
+				}
+				out= fileSystem.create(new Path(fileHdfsPath));
+				out.write(responseBody);
+				out.close();
+				//then we need write the htmlinfo to the Hdfs
+				/*
+				FSDataOutputStream out2 = null;
+				if(fileSystem.exists(new Path(HtmlInfoFilePath))){
+					out2=fileSystem.append(new Path(HtmlInfoFilePath));
+				}
+				else{
+					out2=fileSystem.create(new Path(HtmlInfoFilePath));
+				}
+				out2.write(fileHdfsPath.getBytes());
+		    	out2.write(System.getProperty("line.separator").getBytes());
+		    	out2.close();
+		    	*/
+				fileSystem.close();  
+				return fileHdfsPath;
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 		}
 		else{
-			System.out.println("the file is null");
+			System.out.println("the file"+url+" is null");
+			return fileHdfsPath;
 		}
+		return fileHdfsPath;
 	}
 	public static int getStatus(String url){
 		HttpClient httpClient = new HttpClient();
 		httpClient.getHttpConnectionManager().getParams().setConnectionTimeout(5000);
 		GetMethod getMethod=new GetMethod(url);	 
 		getMethod.getParams().setParameter(HttpMethodParams.SO_TIMEOUT,5000);
-		  //设置请求重试处理，用的是默认的重试处理：请求三次
 		getMethod.getParams().setParameter(HttpMethodParams.RETRY_HANDLER,
 		          new DefaultHttpMethodRetryHandler());
 		HttpGet httpget = new HttpGet(url);

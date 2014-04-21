@@ -15,7 +15,7 @@ import org.htmlparser.visitors.ObjectFindingVisitor;
 public class PageParser {
 	//after some fix ,it can match chinese \u4e00-\u9fa5,just add it is ok
 	private static final String regex = "\\b(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;\u4e00-\u9fa5]*[-a-zA-Z0-9+&@#/%=~_|]";
-	public static ArrayList getHtmlNode(String htmlString) throws ParserException{
+	public static ArrayList getLinks(String htmlString) throws ParserException{
 		// this function is used to get the 
 		if(htmlString==null){
 			return null;
@@ -28,6 +28,7 @@ public class PageParser {
 	    parser.visitAllNodesWith(visitor);
 	    Node[] nodes = visitor.getTags();
 	    ArrayList stringArray= new ArrayList();
+	    // bea
 	    for (int i = 0; i < nodes.length; i++) {
 	    	linkTag=(LinkTag)nodes[i];
 	    	if(isMatch(linkTag.getLink())){
@@ -36,7 +37,7 @@ public class PageParser {
 	    	}
 	    }
 	    if(stringArray.size()<=0){
-	    	System.out.println("we get no links at this page");
+	    	//System.out.println("we get no links at this page");
 	    	stringArray=null;
 	    }
 	    return stringArray;
