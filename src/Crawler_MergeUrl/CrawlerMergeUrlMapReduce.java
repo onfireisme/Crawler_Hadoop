@@ -1,4 +1,4 @@
-package Crawler_GetValidUrl;
+package Crawler_MergeUrl;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,24 +20,17 @@ import org.apache.hadoop.mapreduce.Reducer.Context;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import Crawler_MergeUrl.CrawlerMergeUrlMapReduce;
-import Crawler_MergeUrl.CrawlerMergeUrlMapReduce.CrawlerHtmlParserReduce;
-import Crawler_MergeUrl.CrawlerMergeUrlMapReduce.MapClass;
 
-public class CrawlerGetValidUrlMapReduce extends Configured implements Tool  {
+public class CrawlerMergeUrlMapReduce extends Configured implements Tool {
 	private static String level = "1";
 	private static String HtmlInfoFilePath ;
-	//private static String urlFilePath=configure.URLFILESPATH +"2"+ configure.URLNAME;
-	//private static String urlFilePath="hdfs://ubuntu:9000/Crawler/UrlFiles/2/merge/part-r-00000";
-	//private static String urlFilePath2="hdfs://ubuntu:9000/Crawler/UrlFiles/1/url.txt";
-	private static String urlFilePath="hdfs://ubuntu:9000/Crawler/test.txt";
-	private static String urlFilePath2="hdfs://ubuntu:9000/Crawler/test2.txt";
-	private static String temp="hdfs://ubuntu:9000/Crawler/test";
-	//private static String temp=configure.URLFILESPATH+"2"+"/valid";
+	private static String urlFilePath=configure.URLFILESPATH +"2"+ configure.URLNAME;
+	private static String temp=configure.URLFILESPATH+"2"+"/merge";
 	public static class MapClass extends
 			Mapper<LongWritable, Text, Text, IntWritable> {
 		private Text url = new Text();
@@ -70,13 +63,7 @@ public class CrawlerGetValidUrlMapReduce extends Configured implements Tool  {
 		public void reduce(Text url, Iterable<IntWritable> values,
 				Context context) throws IOException, InterruptedException {
 			System.out.println(url);
-			int sum=0;
-			for (IntWritable val : values) {
-				sum += val.get();
-			}
-			if(sum==1){
-				context.write(url, NullWritable.get());
-			}
+			context.write(url, NullWritable.get());
 		}
 		/*
 		 * @Override protected void cleanup(Context context) throws IOException,
@@ -106,10 +93,9 @@ public class CrawlerGetValidUrlMapReduce extends Configured implements Tool  {
 		//initPath();
 		//configure.createFile(urlFilePath);
 		Job job = new Job();
-		job.setJarByClass(CrawlerGetValidUrlMapReduce.class);
+		job.setJarByClass(CrawlerMergeUrlMapReduce.class);
 
 		FileInputFormat.addInputPath(job, new Path(urlFilePath));
-		FileInputFormat.addInputPath(job, new Path(urlFilePath2));
 		FileOutputFormat.setOutputPath(job, new Path(temp));
 
 		job.setMapperClass(MapClass.class);
@@ -133,7 +119,7 @@ public class CrawlerGetValidUrlMapReduce extends Configured implements Tool  {
 
 	public static void main(String[] args) throws Exception {
 		int res = ToolRunner.run(new Configuration(),
-				new CrawlerGetValidUrlMapReduce(), args);
+				new CrawlerMergeUrlMapReduce(), args);
 		// System.exit(res);
 	}
 }

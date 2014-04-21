@@ -38,7 +38,7 @@ import org.htmlparser.visitors.ObjectFindingVisitor;
 public class CrawlerHtmlParserMapReduce extends Configured implements Tool {
 	private static String level = "1";
 	private static String HtmlInfoFilePath ;
-	private static String urlFilePath=configure.URLFILESPATH +"2"+ configure.URLNAME;
+	private static String urlFilePath=configure.URLFILESPATH +"temp"+ configure.URLNAME;
 
 	public static class MapClass extends
 			Mapper<LongWritable, Text, Text, IntWritable> {
