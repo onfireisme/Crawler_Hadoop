@@ -46,6 +46,7 @@ public class ReadHDFSFile {
 			StringWriter writer = new StringWriter();
 			IOUtils.copy(in, writer);
 			reuslt = writer.toString();
+			in.close();
 		}
 		else{
 			System.out.println("its not html file");

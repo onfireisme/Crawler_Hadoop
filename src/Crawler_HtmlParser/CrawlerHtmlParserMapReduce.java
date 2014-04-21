@@ -6,93 +6,159 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 
+import onfire.configure.configure;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.FileInputFormat;
-import org.apache.hadoop.mapred.FileOutputFormat;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.MapReduceBase;
-import org.apache.hadoop.mapred.Mapper;
-import org.apache.hadoop.mapred.OutputCollector;
-import org.apache.hadoop.mapred.Reducer;
-import org.apache.hadoop.mapred.Reporter;
-import org.apache.hadoop.mapred.TextInputFormat;
-import org.apache.hadoop.mapred.TextOutputFormat;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.Mapper.Context;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.util.ToolRunner;
+import org.htmlparser.Node;
+import org.htmlparser.Parser;
+import org.htmlparser.tags.LinkTag;
 import org.htmlparser.util.ParserException;
+import org.htmlparser.visitors.ObjectFindingVisitor;
 
 
+public class CrawlerHtmlParserMapReduce extends Configured implements Tool {
+	private static String level = "1";
+	private static String HtmlInfoFilePath ;
+	private static String urlFilePath=configure.URLFILESPATH +"2"+ configure.URLNAME;
 
-public class CrawlerHtmlParserMapReduce {
-	private static String level="1";
-	
-	private static String HtmlFilesPath="hdfs://ubuntu:9000/Crawler/HtmlFiles";
-	private static String urlOutputPath="hdfs://ubuntu:9000/Crawler/urlOutput/"+level+".txt";
-	public static class Map extends MapReduceBase implements
-    Mapper<LongWritable, Text, Text, IntWritable> {
+	public static class MapClass extends
+			Mapper<LongWritable, Text, Text, IntWritable> {
+		private Text filePath = new Text();
 		private final static IntWritable one = new IntWritable(1);
-		private Text link = new Text();
-
-		public void map(LongWritable key, Text inputHtml,
-				OutputCollector<Text, IntWritable> output, Reporter reporter)
-        throws IOException {
-			//attention,the inputHtml is the html file
-				try {
-					ArrayList  linkArray=PageParser.getLinks(inputHtml.toString());
-					if(linkArray==null){
+		private Text temp=new Text();
+		private ArrayList linkList=null;
+		
+		// Map Method
+		public void map(LongWritable key, Text filePathInfo, Context context)
+				throws IOException, InterruptedException {
+			StringTokenizer tokenizer = new StringTokenizer(
+					filePathInfo.toString());
+			while (tokenizer.hasMoreTokens()) {
+				filePath.set(tokenizer.nextToken());
+				if (filePath.toString() != null
+						&& filePath.toString().length() > 0) {
+					// if the url is null ,
+					//System.out.println(filePath.toString());
+					
+					try {
+						linkList = PageParser.getLinks(ReadHDFSFile
+										.getFileString(filePath.toString()));
+					} catch (ParserException | IllegalArgumentException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					if (linkList == null) {
 						return;
 					}
-					if(linkArray.size()<=0){
+					if (linkList.size() <= 0) {
 						return;
 					}
-					for(int i=0;i<linkArray.size();i++){
-						System.out.println(linkArray.get(i));
-						output.collect(new Text(linkArray.get(i).toString()),one);
+					WriteURLToHDFS.writeURLToHDFS(linkList, urlFilePath);
+					/*
+					//for (int i = 0; i < linkList.size(); i++) {
+						//System.out.println("test");
+						context.write(new Text("test"), one);
+						// we write the file to
+						//context.write(new Text(linkList.get(i).toString()),one);
+						//System.out.println(linkList.get(i));
 					}
-				} catch (ParserException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					*/
 				}
+			}
+		}
+		
+
+		@Override
+		protected void cleanup(Context context) {
+			// this function is called when the mapreduce is finished
 		}
 	}
-	public static class Reduce extends MapReduceBase implements
-    Reducer<Text, IntWritable, Text, IntWritable> {
-		  public void reduce(Text url, Iterator<IntWritable> values,
-        OutputCollector<Text, IntWritable> output, Reporter reporter){
-			  //int status=DownloadPage.getStatus(url.toString());
-			  //if (status >= 200 && status < 300) {
-				  //new CrawlerThread(url.toString(),outPutPath);
-			  //}
-		  }
-	}
-	public static void main(String[] args)throws Exception{ 
-		JobConf conf = new JobConf(CrawlerHtmlParserMapReduce.class);
-		String inputPath="hdfs://ubuntu:9000/Crawler/HtmlFiles/www.36kr.com_.html";
-		String outputPath="hdfs://ubuntu:9000/Crawler/temp/temp3";
-		conf.setOutputKeyClass(Text.class);
-	    conf.setOutputValueClass(IntWritable.class);
-	    
-		conf.setJobName("test");
-		conf.setMapperClass(Map.class);
-		conf.setCombinerClass(Reduce.class);
-		conf.setReducerClass(Reduce.class);
-		
-		conf.setInputFormat(TextInputFormat.class);
-		conf.setOutputFormat(TextOutputFormat.class);
-		
-		FileInputFormat.setInputPaths(conf, new Path(inputPath));
-//	    FileOutputFormat.setOutputPath(conf, new Path(outPut));
-		FileOutputFormat.setOutputPath(conf, new Path(outputPath));
-	    JobClient.runJob(conf);
+
+	public static class CrawlerHtmlParserReduce extends
+			Reducer<Text, IntWritable, Text, IntWritable> {
+		private final static IntWritable one = new IntWritable(1);
+		// Reduce Method
+		public void reduce(Text url, Iterable<IntWritable> values,
+				Context context) throws IOException, InterruptedException {
+			System.out.println("ur"+url);
+			//context.write(url, one);
+		}
 		/*
-		Path[] listedPaths=ReadHDFSFile.getFilePath(HtmlFilesPath);
-		String temp;
-		for(Path p:listedPaths){
-			temp=ReadHDFSFile.getFileString(p.toString());
-			WriteURLToHDFS.writeURLToHDFS(PageParser.getHtmlNode(temp), urlOutputPath);
-	    }
-	    */
+		@Override
+		protected void cleanup(Context context) throws IOException,
+				InterruptedException {
+			//maybe I can put all the url to one at this place,or I can write a function to get all the 
+		}
+		*/
 	}
+
+	public void setLevel(String level) {
+		this.level = level;
+	}
+	public void initPath(){
+		HtmlInfoFilePath = configure.HTMLFILESINFOPATH
+				+ level + configure.HTMLINFONAME;
+		int intLevel=Integer.parseInt(this.level);
+		intLevel++;
+		/*
+		urlFilePath=configure.URLFILESPATH + Integer.toString(intLevel)
+				+ "/";
+				*/
+		System.out.println(urlFilePath);
+	}
+	public int run(String[] arg0) throws Exception {
+		setLevel("1");
+		initPath();
+		configure.createFile(urlFilePath);
+		Job job = new Job();
+		job.setJarByClass(CrawlerHtmlParserMapReduce.class);
+
+		FileInputFormat.addInputPath(job, new Path(HtmlInfoFilePath));
+		//FileOutputFormat.setOutputPath(job, new Path(urlFilePath));
+		
+		
+		job.setMapperClass(MapClass.class);
+		//job.setCombinerClass(CrawlerHtmlParserReduce.class);
+		job.setReducerClass(CrawlerHtmlParserReduce.class);
+		
+		job.setInputFormatClass(TextInputFormat.class);
+        job.setOutputFormatClass(NullOutputFormat.class);  
+
+		//job.setOutputFormatClass(TextOutputFormat.class);
+		
+		job.setMapOutputKeyClass(Text.class);
+		job.setMapOutputValueClass(IntWritable.class);
+		//job.setOutputKeyClass(Text.class);
+		//job.setOutputValueClass(IntWritable.class);
+		
+		//job.waitForCompletion(true);
+		//return 0;
+		return job.waitForCompletion(true) ? 0 : 1;
+	}
+
+	public static void main(String[] args) throws Exception {
+		int res = ToolRunner.run(new Configuration(),
+				new CrawlerHtmlParserMapReduce(), args);
+		//System.exit(res);
+	}
+
 }

@@ -26,6 +26,7 @@ public class WriteURLToHDFS {
 	    	out.write(stringList.get(i).toString().getBytes());
 	    	out.write(System.getProperty("line.separator").getBytes());
 	    }
+	    out.close();
 	    fileSystem.close();
 	}
 }
