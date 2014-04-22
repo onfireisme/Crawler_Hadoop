@@ -27,10 +27,8 @@ import org.apache.hadoop.util.ToolRunner;
 
 
 public class CrawlerMergeUrlMapReduce extends Configured implements Tool {
-	private static String level = "1";
-	private static String HtmlInfoFilePath ;
 	private static String urlFilePath=configure.URLFILESPATH +"2"+ configure.URLNAME;
-	private static String temp=configure.URLFILESPATH+"2"+"/merge";
+	private static String mergedUrlPath;
 	public static class MapClass extends
 			Mapper<LongWritable, Text, Text, IntWritable> {
 		private Text url = new Text();
@@ -71,32 +69,26 @@ public class CrawlerMergeUrlMapReduce extends Configured implements Tool {
 		 * place,or I can write a function to get all the }
 		 */
 	}
-
-	public void setLevel(String level) {
-		this.level = level;
-	}
-
-	public void initPath() {
-		HtmlInfoFilePath = configure.HTMLFILESINFOPATH + level
-				+ configure.HTMLINFONAME;
-		int intLevel = Integer.parseInt(this.level);
-		intLevel++;
+	public void initPath() throws IOException {
+		urlFilePath=configure.getLatestUnprocessedUrlFilePath();
+				//configure.HTMLFILESINFOPATH + level
+				//+ configure.HTMLINFONAME;
 		/*
 		 * urlFilePath=configure.URLFILESPATH + Integer.toString(intLevel) +
 		 * "/";
 		 */
+		mergedUrlPath=configure.getLatestMergedUrlFolderPath();
 		System.out.println(urlFilePath);
 	}
 
 	public int run(String[] arg0) throws Exception {
 		//setLevel("1");
-		//initPath();
-		//configure.createFile(urlFilePath);
+		initPath();
 		Job job = new Job();
 		job.setJarByClass(CrawlerMergeUrlMapReduce.class);
 
 		FileInputFormat.addInputPath(job, new Path(urlFilePath));
-		FileOutputFormat.setOutputPath(job, new Path(temp));
+		FileOutputFormat.setOutputPath(job, new Path(mergedUrlPath));
 
 		job.setMapperClass(MapClass.class);
 		// job.setCombinerClass(CrawlerHtmlParserReduce.class);

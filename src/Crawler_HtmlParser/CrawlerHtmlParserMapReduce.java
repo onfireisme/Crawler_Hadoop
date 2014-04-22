@@ -36,7 +36,7 @@ import org.htmlparser.visitors.ObjectFindingVisitor;
 
 
 public class CrawlerHtmlParserMapReduce extends Configured implements Tool {
-	private static String level = "1";
+	//private static String level = "1";
 	private static String HtmlInfoFilePath ;
 	private static String urlFilePath=configure.URLFILESPATH +"temp"+ configure.URLNAME;
 
@@ -58,7 +58,6 @@ public class CrawlerHtmlParserMapReduce extends Configured implements Tool {
 						&& filePath.toString().length() > 0) {
 					// if the url is null ,
 					//System.out.println(filePath.toString());
-					
 					try {
 						linkList = PageParser.getLinks(ReadHDFSFile
 										.getFileString(filePath.toString()));
@@ -85,14 +84,11 @@ public class CrawlerHtmlParserMapReduce extends Configured implements Tool {
 				}
 			}
 		}
-		
-
 		@Override
 		protected void cleanup(Context context) {
 			// this function is called when the mapreduce is finished
 		}
 	}
-
 	public static class CrawlerHtmlParserReduce extends
 			Reducer<Text, IntWritable, Text, IntWritable> {
 		private final static IntWritable one = new IntWritable(1);
@@ -110,13 +106,12 @@ public class CrawlerHtmlParserMapReduce extends Configured implements Tool {
 		}
 		*/
 	}
-
-	public void setLevel(String level) {
-		this.level = level;
-	}
-	public void initPath(){
-		HtmlInfoFilePath = configure.HTMLFILESINFOPATH
-				+ level + configure.HTMLINFONAME;
+	public void initPath() throws IOException{
+		HtmlInfoFilePath =configure.getLatestHtmlFilePathInfo();
+		urlFilePath=configure.getNextUnprocessedUrlFilePath();
+				//configure.HTMLFILESINFOPATH
+				//+ level + configure.HTMLINFONAME;
+		/*
 		int intLevel=Integer.parseInt(this.level);
 		intLevel++;
 		/*
@@ -126,7 +121,7 @@ public class CrawlerHtmlParserMapReduce extends Configured implements Tool {
 		System.out.println(urlFilePath);
 	}
 	public int run(String[] arg0) throws Exception {
-		setLevel("1");
+		//setLevel("1");
 		initPath();
 		configure.createFile(urlFilePath);
 		Job job = new Job();

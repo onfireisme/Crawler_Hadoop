@@ -29,14 +29,12 @@ import Crawler_MergeUrl.CrawlerMergeUrlMapReduce.CrawlerHtmlParserReduce;
 import Crawler_MergeUrl.CrawlerMergeUrlMapReduce.MapClass;
 
 public class CrawlerGetValidUrlMapReduce extends Configured implements Tool  {
-	private static String level = "1";
-	private static String HtmlInfoFilePath ;
 	//private static String urlFilePath=configure.URLFILESPATH +"2"+ configure.URLNAME;
 	//private static String urlFilePath="hdfs://ubuntu:9000/Crawler/UrlFiles/2/merge/part-r-00000";
 	//private static String urlFilePath2="hdfs://ubuntu:9000/Crawler/UrlFiles/1/url.txt";
-	private static String urlFilePath="hdfs://ubuntu:9000/Crawler/test.txt";
-	private static String urlFilePath2="hdfs://ubuntu:9000/Crawler/test2.txt";
-	private static String temp="hdfs://ubuntu:9000/Crawler/test";
+	private static ArrayList urlFilePath;
+	private static String validUrlFileFolderPath;
+
 	//private static String temp=configure.URLFILESPATH+"2"+"/valid";
 	public static class MapClass extends
 			Mapper<LongWritable, Text, Text, IntWritable> {
@@ -58,6 +56,7 @@ public class CrawlerGetValidUrlMapReduce extends Configured implements Tool  {
 
 		@Override
 		protected void cleanup(Context context) {
+			// at this place,we can delete the 
 			// this function is called when the mapreduce is finished
 		}
 	}
@@ -84,16 +83,9 @@ public class CrawlerGetValidUrlMapReduce extends Configured implements Tool  {
 		 * place,or I can write a function to get all the }
 		 */
 	}
-
-	public void setLevel(String level) {
-		this.level = level;
-	}
-
-	public void initPath() {
-		HtmlInfoFilePath = configure.HTMLFILESINFOPATH + level
-				+ configure.HTMLINFONAME;
-		int intLevel = Integer.parseInt(this.level);
-		intLevel++;
+	public void initPath() throws IOException {
+		urlFilePath=configure.getLatestMergedUrlFilePath();
+		validUrlFileFolderPath=configure.getLatestValidUrlFolderPath();
 		/*
 		 * urlFilePath=configure.URLFILESPATH + Integer.toString(intLevel) +
 		 * "/";
@@ -103,14 +95,13 @@ public class CrawlerGetValidUrlMapReduce extends Configured implements Tool  {
 
 	public int run(String[] arg0) throws Exception {
 		//setLevel("1");
-		//initPath();
-		//configure.createFile(urlFilePath);
+		initPath();
 		Job job = new Job();
 		job.setJarByClass(CrawlerGetValidUrlMapReduce.class);
-
-		FileInputFormat.addInputPath(job, new Path(urlFilePath));
-		FileInputFormat.addInputPath(job, new Path(urlFilePath2));
-		FileOutputFormat.setOutputPath(job, new Path(temp));
+		for(int i=0;i<urlFilePath.size();i++){
+			FileInputFormat.addInputPath(job, new Path(urlFilePath.get(i).toString()));
+		}
+		FileOutputFormat.setOutputPath(job, new Path(validUrlFileFolderPath));
 
 		job.setMapperClass(MapClass.class);
 		// job.setCombinerClass(CrawlerHtmlParserReduce.class);

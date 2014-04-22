@@ -36,8 +36,9 @@ public class CrawlerDownloadMapReduce extends Configured implements Tool {
 	private static String HtmlFilePath = configure.HTMLFILESPATH + level + "/";
 	private static String HtmlInfoFilePath = configure.HTMLFILESINFOPATH
 			+ level + configure.HTMLINFONAME;
-	private static String urlFilePath = configure.URLFILESPATH + level
-			+ configure.URLNAME;
+//	private static String urlFilePath = configure.URLFILESPATH + level
+//			+ configure.URLNAME;
+	private static ArrayList<String> urlFilePathList;
 
 	public static class MapClass extends
 			Mapper<LongWritable, Text, Text, IntWritable> {
@@ -126,26 +127,27 @@ public class CrawlerDownloadMapReduce extends Configured implements Tool {
 			// context.write(new Text("Max"), new IntWritable(max));
 		}
 	}
-	public void setLevel(String level){
-		this.level=level;
-	}
-	public void initPath(){
-		HtmlFilePath = configure.HTMLFILESPATH + level + "/";
-		HtmlInfoFilePath = configure.HTMLFILESINFOPATH
-				+ level + configure.HTMLINFONAME;
-		urlFilePath = configure.URLFILESPATH + level
-				+ configure.URLNAME;
+	public void initPath() throws IOException{
+		HtmlFilePath = configure.getNextHtmlFilePath();
+				//configure.HTMLFILESPATH + level + "/";
+		HtmlInfoFilePath = configure.getNextHtmlFilePathInfo();
+				//configure.HTMLFILESINFOPATH
+				//+ level + configure.HTMLINFONAME;
+		urlFilePathList = configure.getLatestValidUrlFilePath();
+				//configure.URLFILESPATH + level
+				//+ configure.URLNAME;
 	}
 	@Override  
 	    public int run(String[] arg0) throws Exception {  
 	    	//HtmlFilePath=configure.HTMLFILESPATH+level+"/";
 			//String urlFilePath=configure.URLFILESPATH+level+configure.URLNAME;
-	    	setLevel("1");
+	    	//setLevel("1");
 	    	initPath();
 	        Job job = new Job();  
 	        job.setJarByClass(CrawlerDownloadMapReduce.class);  
-	          
-	        FileInputFormat.addInputPath(job, new Path(urlFilePath));  
+	        for(int i=0;i<urlFilePathList.size();i++){
+	        	FileInputFormat.addInputPath(job, new Path(urlFilePathList.get(i)));
+	        }
 	       // FileOutputFormat.setOutputPath(job, new Path(HTMLInfoFilePath));  
 	          
 	        job.setMapperClass(MapClass.class);  
