@@ -10,7 +10,7 @@ public class RunCralwer extends Configured implements Tool {
 
 	@Override
 	public int run(String[] arg0) throws Exception {
-		// TODO Auto-generated method stub
+		
 		return 0;
 	}
 	public static void main(String[] args) throws Exception {

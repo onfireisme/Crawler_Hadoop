@@ -2,19 +2,22 @@ package Crawler_Download;
 
 import java.util.concurrent.Callable;
 
+import org.apache.hadoop.fs.FileSystem;
+
 
 
 
 
    public class CrawlerThread implements Callable {
-	    private byte []PageBody;
+	    private String path;
 
-        CrawlerThread( String url,String outPutPath) {
-        	PageBody=DownloadPage.downloadPage(url,outPutPath);
+        CrawlerThread( FileSystem fileSystem,String url,String HtmlFilePath,String HtmlInfoFilePath) {
+        	path=DownloadPage.saveToHdfs(fileSystem, url.toString(),
+					HtmlFilePath, HtmlInfoFilePath);
         }
 
         public Object call() throws Exception {
-            return PageBody;
+            return path;
         }
     }
 

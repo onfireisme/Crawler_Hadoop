@@ -8,6 +8,7 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.params.HttpMethodParams;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -30,43 +31,34 @@ public class DownloadPage {
 		contentType.substring(contentType.lastIndexOf("/")+1);
 		}	
 	}
-	public static String saveToHdfs(byte [] pageBody,String url,String hdfsPath,String HtmlInfoFilePath){
-		byte[] responseBody=pageBody;
-		//byte[] responseBody=downloadPage(url,hdfsPath);
+	public static String saveToHdfs(FileSystem fileSystem,String url,String hdfsPath,String HtmlInfoFilePath){
+		//byte[] responseBody=pageBody;
+		byte[] responseBody=downloadPage(url,hdfsPath);
 		String fileHdfsPath=null;
 		if(responseBody!=null){
 			System.out.println("we get"+url);
 			//may be we just use the url as the key value
 			fileHdfsPath=hdfsPath+getFileNameByUrl(url,"html");
+			/*
 			Configuration conf = new Configuration();
 		    conf.addResource(new Path("/opt/hadoop-2.3.0/etc/hadoop/core-site.xml"));
 		    conf.addResource(new Path("/opt/hadoop-2.3.0/etc/hadoop/hdfs-site.xml"));
 		    // String hdfsPath="hdfs://ubuntu:9000/Crawler/HtmlFiles/";
 		    FileSystem fileSystem=null;
+		    */
 		    try {
-				fileSystem = FileSystem.get(conf);
+				//fileSystem = FileSystem.get(conf);
 				FSDataOutputStream out;
 				if (fileSystem.exists(new Path(fileHdfsPath))) {
 						System.out.println("File " + hdfsPath + " already exists");
-					    return null;
+					    return fileHdfsPath;
 				}
 				out= fileSystem.create(new Path(fileHdfsPath));
 				out.write(responseBody);
 				out.close();
-				//then we need write the htmlinfo to the Hdfs
-				/*
-				FSDataOutputStream out2 = null;
-				if(fileSystem.exists(new Path(HtmlInfoFilePath))){
-					out2=fileSystem.append(new Path(HtmlInfoFilePath));
-				}
-				else{
-					out2=fileSystem.create(new Path(HtmlInfoFilePath));
-				}
-				out2.write(fileHdfsPath.getBytes());
-		    	out2.write(System.getProperty("line.separator").getBytes());
-		    	out2.close();
-		    	*/
-				fileSystem.close();  
+				
+				
+				//fileSystem.close();  
 				return fileHdfsPath;
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
@@ -113,7 +105,7 @@ public class DownloadPage {
 		try {
 			int status = httpClient.executeMethod(getMethod);
 			if (status >= 200 && status < 300) {
-				responseBody = getMethod.getResponseBody();
+				responseBody = IOUtils.toByteArray(getMethod.getResponseBodyAsStream());
 				return responseBody;
 			}
 		} catch (HttpException e) {

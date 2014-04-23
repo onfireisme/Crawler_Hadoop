@@ -69,29 +69,41 @@ public class CrawlerDownloadMapReduce extends Configured implements Tool {
 	public static class Reduce extends
 			Reducer<Text, IntWritable, NullWritable, NullWritable> {
 		private ExecutorService threadPool = Executors.newFixedThreadPool(100);
-		private ArrayList pathList = new ArrayList();
-
+		private ArrayList<String> pathList = new ArrayList();
+		private FileSystem fileSystem=null;
 		// Reduce Method
 		public void reduce(Text url, Iterable<IntWritable> values,
 				Context context) throws IOException, InterruptedException {
-			byte[] pageBody = null;
+			if(fileSystem==null){
+				Configuration conf = new Configuration();
+			    conf.addResource(new Path("/opt/hadoop-2.3.0/etc/hadoop/core-site.xml"));
+			    conf.addResource(new Path("/opt/hadoop-2.3.0/etc/hadoop/hdfs-site.xml"));
+			    fileSystem=FileSystem.get(conf);
+			}
+			//byte[] pageBody = null;
 			System.out.println(url);
+			String temp=null;
 			// new CrawlerThread(url.toString(),HtmlFilePath);
 			// new CrawlerThread(pageBody,url.toString(),HtmlFilePath);
 			try {
-				pageBody = (byte[])threadPool.submit(
-						new CrawlerThread(url.toString(), HtmlFilePath)).get();
+				 temp= (String)threadPool.submit(
+						new CrawlerThread(fileSystem,url.toString(), HtmlFilePath,HtmlInfoFilePath)).get();
+				if(temp!=null){
+					//pathList.add(temp);
+					FSDataOutputStream out2 = null;
+					out2=fileSystem.append(new Path(HtmlInfoFilePath));
+					out2.write(temp.getBytes());
+			    	out2.write(System.getProperty("line.separator").getBytes());
+			    	out2.close();
+					System.out.println("download the page");
+				}
+				else{
+					System.out.println("failed to download the page");
+				}
+				
 			} catch (ExecutionException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
-			if (pageBody != null) {
-				System.out.println("not null");
-				String temp = DownloadPage.saveToHdfs(pageBody, url.toString(),
-						HtmlFilePath, HtmlInfoFilePath);
-				pathList.add(temp);
-			} else {
-				System.out.println("pagebody is null");
 			}
 			// threadPool.execute(new
 			// CrawlerThread(pageBody,url.toString(),HtmlFilePath));
@@ -104,25 +116,30 @@ public class CrawlerDownloadMapReduce extends Configured implements Tool {
 		protected void cleanup(Context context) throws IOException,
 				InterruptedException {
 			threadPool.shutdown();
+			/*
 			// then we write the string to the file
 			Configuration conf = new Configuration();
 			conf.addResource(new Path(
 					"/opt/hadoop-2.3.0/etc/hadoop/core-site.xml"));
 			conf.addResource(new Path(
 					"/opt/hadoop-2.3.0/etc/hadoop/hdfs-site.xml"));
-			FileSystem fileSystem = FileSystem.get(conf);
+					*/
+			//FileSystem fileSystem = FileSystem.get(conf);
+			/*
 			if (fileSystem.exists(new Path(HtmlInfoFilePath))) {
 				System.out.println("File " + HtmlInfoFilePath
 						+ " already exists");
 				return;
 			}
-			FSDataOutputStream out = fileSystem.create(new Path(
+			
+			FSDataOutputStream out = fileSystem.append(new Path(
 					HtmlInfoFilePath));
 			for (int i = 0; i < pathList.size(); i++) {
 				out.write(pathList.get(i).toString().getBytes());
 				out.write(System.getProperty("line.separator").getBytes());
 			}
 			out.close();
+			*/
 			fileSystem.close();
 			// context.write(new Text("Max"), new IntWritable(max));
 		}
@@ -137,12 +154,28 @@ public class CrawlerDownloadMapReduce extends Configured implements Tool {
 				//configure.URLFILESPATH + level
 				//+ configure.URLNAME;
 	}
+	public void createHtmlFileInfo() throws IOException{
+		Configuration conf = new Configuration();
+	    conf.addResource(new Path("/opt/hadoop-2.3.0/etc/hadoop/core-site.xml"));
+	    conf.addResource(new Path("/opt/hadoop-2.3.0/etc/hadoop/hdfs-site.xml"));
+	    FileSystem fileSystem=FileSystem.get(conf);
+		if (fileSystem.exists(new Path(HtmlInfoFilePath))) {
+			System.out.println("File " + HtmlInfoFilePath
+					+ " already exists");
+			return;
+		}
+		FSDataOutputStream out = fileSystem.create(new Path(
+				HtmlInfoFilePath));
+		out.close();
+		fileSystem.close();
+	}
 	@Override  
 	    public int run(String[] arg0) throws Exception {  
 	    	//HtmlFilePath=configure.HTMLFILESPATH+level+"/";
 			//String urlFilePath=configure.URLFILESPATH+level+configure.URLNAME;
 	    	//setLevel("1");
 	    	initPath();
+	    	createHtmlFileInfo();
 	        Job job = new Job();  
 	        job.setJarByClass(CrawlerDownloadMapReduce.class);  
 	        for(int i=0;i<urlFilePathList.size();i++){
@@ -157,6 +190,7 @@ public class CrawlerDownloadMapReduce extends Configured implements Tool {
 	        
 	        job.setMapOutputKeyClass(Text.class);
 	        job.setMapOutputValueClass(IntWritable.class);
+	        job.setNumReduceTasks(6);
 	        //job.setOutputKeyClass(NullWritable.class);  
 	        //job.setOutputValueClass(NullWritable.class);  
 	        //job.waitForCompletion(true);  
